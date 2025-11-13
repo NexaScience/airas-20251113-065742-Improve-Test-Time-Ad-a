@@ -1,0 +1,95 @@
+# Full experiment configuration for exp-1-cifar-core
+# Covers: CIFAR-10-C and CIFAR-100-C, 3 seeds, 5 methodological variations.
+
+experiments:
+{% for dataset_name, num_classes in [('cifar10c', 10), ('cifar100c', 100)] %}
+{% for seed in [0, 1, 2] %}
+  # ===============================================================
+  # Dataset: {{ dataset_name }} • Seed: {{ seed }}
+  # ===============================================================
+  # 1. Frozen ------------------------------------------------------
+  - run_id: {{ dataset_name }}_frozen_seed{{ seed }}
+    seed: {{ seed }}
+    dataset:
+      name: {{ dataset_name }}
+      num_classes: {{ num_classes }}
+      batch_size: 128
+      num_workers: 4
+      severities: [5, 4, 3, 2, 1]
+    model:
+      name: resnet18
+      num_classes: {{ num_classes }}
+      pretrained: true
+    method:
+      name: Frozen
+
+  # 2. TENT --------------------------------------------------------
+  - run_id: {{ dataset_name }}_tent_seed{{ seed }}
+    seed: {{ seed }}
+    dataset:
+      name: {{ dataset_name }}
+      num_classes: {{ num_classes }}
+      batch_size: 128
+      num_workers: 4
+      severities: [5, 4, 3, 2, 1]
+    model:
+      name: resnet18
+      num_classes: {{ num_classes }}
+      pretrained: true
+    method:
+      name: TENT
+      lr: 0.001
+
+  # 3. AdaEnt (proposed) -----------------------------------------
+  - run_id: {{ dataset_name }}_adaent_seed{{ seed }}
+    seed: {{ seed }}
+    dataset:
+      name: {{ dataset_name }}
+      num_classes: {{ num_classes }}
+      batch_size: 128
+      num_workers: 4
+      severities: [5, 4, 3, 2, 1]
+    model:
+      name: resnet18
+      num_classes: {{ num_classes }}
+      pretrained: true
+    method:
+      name: AdaEnt
+      lr: 0.001
+
+  # 4. AdaEnt-Fixed-Alpha (ablation) ------------------------------
+  - run_id: {{ dataset_name }}_adaent_fixed_alpha_seed{{ seed }}
+    seed: {{ seed }}
+    dataset:
+      name: {{ dataset_name }}
+      num_classes: {{ num_classes }}
+      batch_size: 128
+      num_workers: 4
+      severities: [5, 4, 3, 2, 1]
+    model:
+      name: resnet18
+      num_classes: {{ num_classes }}
+      pretrained: true
+    method:
+      name: AdaEntFixedAlpha
+      lr: 0.001
+      alpha: 0.5
+
+  # 5. Oracle full-batch (large LR) -------------------------------
+  - run_id: {{ dataset_name }}_oracle_fullbatch_lr_seed{{ seed }}
+    seed: {{ seed }}
+    dataset:
+      name: {{ dataset_name }}
+      num_classes: {{ num_classes }}
+      batch_size: 128
+      num_workers: 4
+      severities: [5, 4, 3, 2, 1]
+    model:
+      name: resnet18
+      num_classes: {{ num_classes }}
+      pretrained: true
+    method:
+      name: TENT  # mechanics identical to TENT but with large LR
+      lr: 0.01
+{% endfor %}
+{% endfor %}

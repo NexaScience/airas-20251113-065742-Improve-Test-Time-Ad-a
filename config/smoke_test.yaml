@@ -1,0 +1,93 @@
+# Light-weight smoke test that runs **all** methodological variations on a
+# synthetic toy dataset so that the full pipeline (training, evaluation,
+# aggregation, plotting) can be validated in < 10 seconds on CPU.
+experiments:
+  # -------------------------------------------------------------------
+  # 1. Frozen (no adaptation)
+  - run_id: smoke_synth_frozen
+    seed: 0
+    dataset:
+      name: synthetic
+      num_classes: 10
+      num_samples: 512
+      input_shape: [3, 32, 32]
+      batch_size: 128
+    model:
+      name: resnet18
+      num_classes: 10
+      pretrained: false
+    method:
+      name: Frozen
+
+  # -------------------------------------------------------------------
+  # 2. TENT baseline
+  - run_id: smoke_synth_tent
+    seed: 0
+    dataset:
+      name: synthetic
+      num_classes: 10
+      num_samples: 512
+      input_shape: [3, 32, 32]
+      batch_size: 128
+    model:
+      name: resnet18
+      num_classes: 10
+      pretrained: false
+    method:
+      name: TENT
+      lr: 0.001
+
+  # -------------------------------------------------------------------
+  # 3. AdaEnt (proposed)
+  - run_id: smoke_synth_adaent
+    seed: 0
+    dataset:
+      name: synthetic
+      num_classes: 10
+      num_samples: 512
+      input_shape: [3, 32, 32]
+      batch_size: 128
+    model:
+      name: resnet18
+      num_classes: 10
+      pretrained: false
+    method:
+      name: AdaEnt
+      lr: 0.001
+
+  # -------------------------------------------------------------------
+  # 4. AdaEnt-Fixed-Alpha (ablation)
+  - run_id: smoke_synth_adaent_fixed_alpha
+    seed: 0
+    dataset:
+      name: synthetic
+      num_classes: 10
+      num_samples: 512
+      input_shape: [3, 32, 32]
+      batch_size: 128
+    model:
+      name: resnet18
+      num_classes: 10
+      pretrained: false
+    method:
+      name: AdaEntFixedAlpha
+      lr: 0.001
+      alpha: 0.5
+
+  # -------------------------------------------------------------------
+  # 5. Oracle full-batch LR (simulated via high LR TENT)
+  - run_id: smoke_synth_oracle_fullbatch_lr
+    seed: 0
+    dataset:
+      name: synthetic
+      num_classes: 10
+      num_samples: 512
+      input_shape: [3, 32, 32]
+      batch_size: 128
+    model:
+      name: resnet18
+      num_classes: 10
+      pretrained: false
+    method:
+      name: TENT      # same mechanics, different (large) LR
+      lr: 0.01
