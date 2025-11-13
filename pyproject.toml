@@ -1,1 +1,17 @@
-# Please list the required python packages.
+[project]
+name = "adaent-tta-experiments"
+version = "0.1.0"
+description = "AdaEnt TTA experiments – specialised implementation for exp-2-imagenet-robust"
+requires-python = ">=3.10"
+
+[project.dependencies]
+torch = ">=2.0.0"
+torchvision = "*"
+pyyaml = "*"
+numpy = "*"
+matplotlib = "*"
+seaborn = "*"
+pandas = "*"
+scikit-learn = "*"
+timm = "*"
+datasets = "*"

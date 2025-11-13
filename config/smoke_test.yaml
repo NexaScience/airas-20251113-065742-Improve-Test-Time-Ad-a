@@ -1,0 +1,82 @@
+# Smoke-test configuration covering **all** run variations on synthetic data.
+experiments:
+  - run_id: smoke_synth_TENT
+    seed: 0
+    dataset:
+      name: synthetic
+      num_classes: 10
+      num_samples: 512
+      input_shape: [3, 32, 32]
+      batch_size: 128
+    model:
+      name: resnet18
+      num_classes: 10
+      pretrained: false
+    method:
+      name: TENT
+      lr: 0.001
+
+  - run_id: smoke_synth_AdaEnt
+    seed: 0
+    dataset:
+      name: synthetic
+      num_classes: 10
+      num_samples: 512
+      input_shape: [3, 32, 32]
+      batch_size: 128
+    model:
+      name: resnet18
+      num_classes: 10
+      pretrained: false
+    method:
+      name: AdaEnt
+      lr: 0.001
+
+  - run_id: smoke_synth_AdaEnt_DELTA
+    seed: 0
+    dataset:
+      name: synthetic
+      num_classes: 10
+      num_samples: 512
+      input_shape: [3, 32, 32]
+      batch_size: 128
+    model:
+      name: resnet18
+      num_classes: 10
+      pretrained: false
+    method:
+      name: AdaEnt+DELTA
+      lr: 0.001
+      delta_lambda: 0.1
+
+  - run_id: smoke_synth_SHOT_IM
+    seed: 0
+    dataset:
+      name: synthetic
+      num_classes: 10
+      num_samples: 512
+      input_shape: [3, 32, 32]
+      batch_size: 128
+    model:
+      name: resnet18
+      num_classes: 10
+      pretrained: false
+    method:
+      name: SHOT-IM
+      lr: 0.001
+
+  - run_id: smoke_synth_oracleLR
+    seed: 0
+    dataset:
+      name: synthetic
+      num_classes: 10
+      num_samples: 512
+      input_shape: [3, 32, 32]
+      batch_size: 128
+    model:
+      name: resnet18
+      num_classes: 10
+      pretrained: false
+    method:
+      name: OracleLR
+      lr: 0.1
