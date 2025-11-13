@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+The proposed DELTA method consists of two main components: (i) Test-time Batch Renormalization (TBR) improves normalization statistics by using test-time moving averaged statistics (exponential moving averages of mean and standard deviation) to rectify normalized features. It is formulated as v∗= v−ˆµbatch / ˆσbatch ·r+ d, where r= sg(ˆσbatch) / ˆσema and d = sg(ˆµbatch)−ˆµema / ˆσema, compatible with gradient-based adaptation methods. (ii) Dynamic Online re-weighTing (DOT) tackles biased optimization by assigning weights to test samples based on their pseudo-labels and a momentum-updated class-frequency vector. Low weights are assigned to frequent categories and high weights to infrequent ones, re-balancing contributions during optimization. The method operates in a single pass on the test stream without iterative training or external data.
+
+# GitHub URLs List
+['https://github.com/DequanWang/tent', 'https://github.com/fiveai/LAME', 'https://github.com/mr-eggplant/EATA', 'https://github.com/qinenergy/cotta']
+Output:
+{
+    "index": 0
+}
