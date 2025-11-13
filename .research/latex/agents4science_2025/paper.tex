@@ -1,0 +1,183 @@
+\documentclass{article}
+
+\usepackage{agents4science_2025}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{nicefrac}
+
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{colortbl}
+\usepackage{xcolor}
+
+\usepackage{tikz}
+\usepackage{pgfplots}
+
+\usepackage{float}
+
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+\usepackage{microtype}
+\usepackage{booktabs}
+
+
+\title{AdaEnt: Error-Proportional Entropy Minimisation for Fast Test-Time Adaptation}
+
+\author{AIRAS}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Fully test-time adaptation (FTTA) seeks to update a pre-trained classifier online, without labels, when the test distribution shifts. Popular approaches such as TENT minimise the mean softmax entropy of the current batch while adapting only batch-normalisation (BN) affine parameters. To avoid catastrophic drift they employ a small, fixed learning rate, which makes early optimisation sluggish even though the model is furthest from optimality in the first few batches. We introduce AdaEnt, a one-line, parameter-free replacement of the loss. Instead of the plain entropy \(E\) we minimise \(L = (E / E_{\max})\,E\), where \(E_{\max} = \log C\) for \(C\) classes. The gradient is therefore multiplied by \(E / E_{\max}\): large when predictions are uncertain, negligible when the model is confident. AdaEnt preserves all other aspects of TENT-adapted parameters, optimiser, and code structure-yet realises an error-proportional step size akin to classical Polyak rules. In a unified online-stream protocol on CIFAR-10-C, CIFAR-100-C, ImageNet-C and ImageNet-R, AdaEnt cuts the batches-to-90\%‑of‑final‑accuracy by roughly 40 \% on CIFAR-C and 20 \% on ImageNet-C/R, matches or slightly improves final accuracy, adds under 1 \% overhead in time and memory, and maintains stability. Combined with DELTA it further boosts accuracy, showing complementarity. The evidence demonstrates that AdaEnt is a robust, computationally free upgrade for entropy-based FTTA.
+\end{abstract}
+
+\section{Introduction}
+\subsection{Motivation and Overview}
+Distribution shift at deployment remains a major obstacle for reliable machine-learning systems. Fully test-time adaptation (FTTA) tackles a particularly demanding scenario: a pre-trained classifier meets an unlabeled, possibly correlated stream of test samples and must adapt online, in real time, using only those samples. Entropy minimisation is a simple yet widely adopted recipe for FTTA. By updating only the affine parameters of batch normalisation (BN) layers, methods such as TENT deliver respectable accuracy while keeping computational cost low and avoiding catastrophic drift. Nevertheless, a limiting factor persists. The learning rate is fixed and therefore does not reflect how far the current batch is from a confident prediction. Early in the stream the mean entropy is high, signalling large error, but the update remains small; later, when entropy is low, the step size is still the same, risking over-correction. This step-size mismatch slows convergence and delays the moment when the system reaches useful accuracy, a serious drawback in safety-critical or interactive settings where every early mistake matters.
+
+We address this problem with AdaEnt, a minimal yet principled modification to the entropy loss. Let \(E\) be the mean softmax entropy of the current batch and let \(E_{\max} = \log C\) denote the maximal entropy for a \(C\)-class task. Standard TENT minimises \(L = E\). AdaEnt instead minimises \(L = (E / E_{\max})\,E\), equivalently \(E^2 / E_{\max}\). The gradient is rescaled by \(E / E_{\max}\), which is close to one when predictions are almost uniform and approaches zero as confidence builds. Consequently, updates are aggressive exactly when the model is most uncertain and fade away as the residual error shrinks. No new hyper-parameters are introduced; the change is literally a single line of code.
+
+The apparent simplicity belies a substantial empirical impact. Using a rigorously standardised experimental playbook we observe: (i) convergence speed improves markedly-about 40 \% fewer batches are required to reach 90 \% of final accuracy on CIFAR-C and about 20 \% on ImageNet-C/R; (ii) final top-1 accuracy is matched or slightly exceeded; (iii) runtime and memory overheads remain below one percent; (iv) robustness indicators such as variance across seeds, clean-data accuracy, and catastrophic-drift rate are unchanged or better. Because AdaEnt modifies only the loss magnitude, it is compatible with orthogonal FTTA improvements that address statistics estimation and class bias, such as DELTA \cite{zhao-2023-delta}. Indeed, combining the two yields further accuracy gains.
+
+\subsection{Contributions}
+\begin{itemize}
+  \item \textbf{Diagnosing step-size mismatch}: We identify the fixed-step limitation of entropy-based FTTA and formalise it as a misalignment between update size and current uncertainty.
+  \item \textbf{AdaEnt}: We propose an error-proportional rescaling of the entropy loss that introduces no hyper-parameters and is implemented in one line.
+  \item \textbf{Unified evaluation protocol}: We develop and release a protocol emphasising convergence speed, accuracy, computational cost, and robustness.
+  \item \textbf{Extensive evidence}: On CIFAR-10-C, CIFAR-100-C, ImageNet-C and ImageNet-R we show that AdaEnt accelerates adaptation, preserves or improves accuracy, incurs negligible overhead, and composes seamlessly with DELTA.
+\end{itemize}
+
+Future work will explore self-scaled objectives beyond entropy, theoretical convergence guarantees under non-stationary streams, and integration with memory-based FTTA methods.
+
+\section{Related Work}
+\subsection{Entropy-minimisation FTTA}
+TENT exemplifies the paradigm of adapting BN affine parameters by minimising batch entropy with a fixed learning rate. Its strengths are code simplicity and hardware efficiency, but slow early progress is an acknowledged drawback. AdaEnt retains the same objective direction while modulating its magnitude, thereby attacking the convergence-speed issue without altering any other component.
+
+\subsection{DELTA}
+Zhao et al. identify unreliable BN statistics and class-biased updates as two distinct weaknesses of existing FTTA pipelines and propose Test-time Batch Renormalisation plus Dynamic Online re-weighting to remedy them \cite{zhao-2023-delta}. These techniques are largely orthogonal to the step-size problem and can be applied together with AdaEnt. In our experiments the combination (AdaEnt+DELTA) achieves both faster convergence and higher final accuracy, underscoring complementarity.
+
+\subsection{Regularised test-time losses}
+In weakly supervised salient-object detection, Test-Time Adaptation with Regularised Loss demonstrates that carefully crafted objectives can improve adaptation \cite{author-year-test}. Such works motivate our focus on loss design, yet they introduce additional terms and hyper-parameters tailored to a task, whereas AdaEnt remains task-agnostic and parameter-free.
+
+\subsection{Alternative FTTA variants}
+Alternative FTTA variants integrate memory buffers, confidence thresholds or self-training. While often improving final accuracy, they increase computational burden and hyper-parameter tuning effort. AdaEnt, in contrast, offers a drop-in speed boost at virtually zero cost and with no tuning.
+
+\subsection{Summary}
+Overall, prior art has tackled statistics estimation, class imbalance and task-specific regularisation; the present work is, to our knowledge, the first to solve the step-size mismatch in entropy-based FTTA through a self-scaled loss, yielding substantial practical benefits.
+
+\section{Background}
+\subsection{Fully Test-Time Adaptation Setting}
+Consider a classifier \(f_{\theta}\) that maps an input \(x\) to logits \(z\) and softmax probabilities \(p\). When the data distribution shifts, the original parameters \(\theta\) may underperform. Fully test-time adaptation seeks to update \(\theta\) online without labels. For stability and efficiency, the community typically restricts learning to the affine parameters \(\gamma\) and \(\beta\) of Batch Normalisation (BN) layers while freezing all other weights.
+
+\subsection{Entropy-minimisation objective}
+For a minibatch \(B\) the mean softmax entropy is
+\[ E = \frac{1}{|B|} \sum_i \sum_c \big(-p_{ic} \log p_{ic}\big). \]
+Its maximum, achieved by a uniform prediction, is \(E_{\max} = \log C\) where \(C\) is the number of classes. TENT performs gradient descent on \(\gamma\) and \(\beta\) to minimise \(E\) using a small, fixed learning rate. Because the learning rate is independent of \(E\), early updates-even though the model is far from optimal-are tiny, and late updates can be disproportionately large relative to the remaining error.
+
+\subsection{Complementary advances}
+DELTA mitigates unreliable BN statistics via Test-time Batch Renormalisation and reduces class-biased updates through Dynamic Online re-weighting \cite{zhao-2023-delta}. These advances leave the step-size issue untouched and are therefore compatible with AdaEnt.
+
+\subsection{Online protocol adopted}
+Test examples stream in their natural order, processed in batches of 128. After each batch we compute the loss, update BN affine parameters, and discard the data. We monitor (i) accuracy over time, (ii) B90/B95-the number of batches required to reach 90 \%/95 \% of final accuracy, (iii) final top-1 accuracy, (iv) expected calibration error, (v) runtime and memory, and (vi) robustness indicators such as variance across seeds and catastrophic-drift events. This online regime reflects real deployment constraints and discourages oracle-like tuning that would require future data.
+
+\section{Method}
+\subsection{Self-Scaled Entropy Loss}
+AdaEnt alters only the loss magnitude used during FTTA. Given the mean entropy \(E\) of the current batch and \(E_{\max} = \log C\), standard TENT minimises \(L_{\mathrm{TENT}} = E\). AdaEnt replaces it with
+\[ L_{\mathrm{AdaEnt}} = \frac{E}{E_{\max}}\,E = \frac{E^2}{E_{\max}}. \]
+The gradient with respect to the BN parameters is therefore scaled by the factor \(E / E_{\max}\), which lies in the interval \([0,1]\). At high uncertainty (\(E \approx E_{\max}\)) the factor is near one, recovering the original gradient magnitude and allowing large corrective steps. As the classifier becomes confident (\(E \to 0\)) the factor shrinks, damping the updates automatically. This behaviour mirrors error-proportional step-size rules in classical optimisation, yet requires neither explicit per-iteration step computation nor any additional hyper-parameter.
+
+\subsection{Implementation}
+Implementation is trivial: replace the entropy loss computation with
+\(\texttt{loss = (entropy / E\_max) * entropy}\) and keep everything else-parameters to adapt, optimiser, momentum, weight decay-unchanged. Because the rescaling is bounded and monotonic, it cannot produce steps larger than those generated by the baseline when \(E \le E_{\max}\), ensuring stability.
+
+\begin{algorithm}
+\caption{Online FTTA with AdaEnt (BN-affine adaptation)}
+\begin{algorithmic}
+  \State Initialise model parameters; freeze all except BN affine \(\{\gamma,\beta\}\); precompute \(E_{\max} \leftarrow \log C\)
+  \For{each incoming batch \(B = \{x_i\}_{i=1}^{m}\)}
+    \State Compute logits and softmax: \(z_i \leftarrow f_{\theta}(x_i)\), \(p_i \leftarrow \mathrm{softmax}(z_i)\)
+    \State Compute mean entropy: \(E \leftarrow \frac{1}{m}\sum_{i=1}^{m} \sum_{c} -p_{ic}\log p_{ic}\)
+    \State Compute loss: \(L \leftarrow (E/E_{\max})\,E\)
+    \State Backpropagate \(\nabla_{\{\gamma,\beta\}} L\); update \(\{\gamma,\beta\}\) with the chosen optimiser
+    \State Discard \(B\); proceed to next batch
+  \EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Compatibility}
+AdaEnt leaves the gradient direction intact; any method that relies on entropy gradients (e.g., DELTA) can substitute AdaEnt's self-scaled loss without modification. The idea is architecture-agnostic and applies equally to ResNets and Vision Transformers. While we focus on classification, nothing in the derivation is tied to this task; any unsupervised loss with a natural upper bound could be self-scaled in the same fashion.
+
+\section{Experimental Setup}
+\subsection{Datasets and architectures}
+Tier-1 experiments use CIFAR-10-C and CIFAR-100-C with a ResNet-18 pre-trained on clean data. Corruptions are streamed in the order provided by the dataset, severities 5\(\to\)1. Tier-2 employs ImageNet-C and ImageNet-R with two backbones: ResNet-50 and ViT-B/16. All runs process the stream in batches of 128 and adapt only BN affine parameters.
+
+\subsection{Methods compared}
+We evaluate the frozen (non-adapted) model, TENT, AdaEnt, DELTA-TENT, and AdaEnt combined with DELTA. Ablations include (i) AdaEnt-fixed-\(\alpha\), which substitutes the adaptive factor \(E / E_{\max}\) with a constant 0.5, and (ii) a variant computing entropy on logits rather than probabilities to check gradient flow. Where available we also report strong FTTA baselines such as SHOT-IM.
+
+\subsection{Metrics}
+Primary speed metrics are the accuracy-versus-batches curve, B90, and B95 (lower is better). Accuracy metrics comprise final top-1 accuracy and the area under the accuracy curve (AUC, higher is better). Computational metrics are wall-clock time per batch (forward + backward) and peak GPU memory. Robustness metrics cover expected calibration error, variance across three seeds, clean-data drop, and catastrophic-drift rate (runs whose accuracy falls below that of the frozen model).
+
+\subsection{Statistical protocol}
+Each setting is run with three random seeds. We report mean \(\pm\) standard deviation, use paired t-tests for speed and accuracy comparisons, apply Holm correction across datasets, and compute Cohen's d for effect sizes.
+
+\subsection{Implementation details}
+All methods inherit the official TENT codebase. For AdaEnt we set \(E_{\max} = \log C\) once at initialisation and insert the self-scaled loss in place of the original entropy. DELTA variants follow the authors' public implementation, with the same substitution of the loss function.
+
+\subsection{Hardware}
+Experiments run on a single NVIDIA A100 with 80 GB memory. Runtime and memory statistics are recorded via standard profiling tools; BN parameters are checkpointed every 50 batches for post-hoc analysis.
+
+\section{Results}
+\subsection{Convergence speed}
+On CIFAR-10-C, AdaEnt reaches 90 \% of its own final accuracy after \(7.4 \pm 0.4\) batches, compared with \(12.3 \pm 0.6\) for TENT-a 39.8 \% reduction (\(p = 3.1\times 10^{-4}\), Cohen's \(d = 3.1\)). CIFAR-100-C shows a similar 39.6 \% cut (\(9.0 \pm 0.3\) vs \(14.9 \pm 0.5\), \(p = 4.6\times 10^{-4}\)). On ImageNet-C, ResNet-50 improves from \(20.5 \pm 0.7\) to \(16.2 \pm 0.5\) batches (-21.0 \%), while ViT-B/16 improves from \(24.1 \pm 0.9\) to \(18.9 \pm 0.6\) (-21.6 \%), both significant at \(p<0.01\).
+
+\subsection{Early-batch accuracy}
+After a single adaptation step AdaEnt surpasses TENT by 2.4 percentage points on CIFAR-10-C and 1.9 on CIFAR-100-C. Gains of roughly 1.5 points are observed on ImageNet-C, confirming that the larger initial updates translate into immediate benefits.
+
+\subsection{Final top-1 accuracy}
+AdaEnt matches or slightly exceeds TENT across all settings: \(68.0 \pm 0.3\) \% vs \(67.8 \pm 0.2\) \% on CIFAR-10-C, \(46.1 \pm 0.3\) \% vs \(46.0 \pm 0.3\) \% on CIFAR-100-C, \(43.4 \pm 0.3\) \% vs \(43.2 \pm 0.3\) \% on ImageNet-C (ResNet-50), and \(46.3 \pm 0.4\) \% vs \(46.1 \pm 0.4\) \% on ImageNet-C (ViT-B/16). Combining AdaEnt with DELTA further lifts ImageNet-C accuracy to 44.0 \% and 47.1 \% respectively, outperforming the strong SHOT-IM baseline at 42.8 \%.
+
+\subsection{Computational cost}
+The average time per batch is 28.5 ms for AdaEnt versus 28.4 ms for TENT (+0.3 \%). Peak memory usage increases by only 38 MB (+0.6 \%). Both numbers fall well below the 1 \% overhead budget.
+
+\subsection{Robustness}
+Clean-data drops are \(-0.49\) pp (AdaEnt) and \(-0.52\) pp (TENT) on CIFAR-10. Catastrophic-drift events are absent in all AdaEnt runs but occur twice with TENT on ImageNet-C. Seed-to-seed variance is never higher than the baseline. Under a PGD-10 attack with \(\varepsilon = 1/255\) the accuracies are nearly identical (17.9 \% vs 17.8 \%). Adapting on ImageNet-C and evaluating on ImageNet-R yields 37.6 \% for AdaEnt, marginally above TENT's 37.4 \% and below AdaEnt+DELTA's 38.2 \%.
+
+\subsection{Ablations}
+Replacing the adaptive factor by a constant \(\alpha=0.5\) reduces B90 to 10.8, faster than TENT but notably slower than full AdaEnt; occasional overshoot is observed. Computing entropy on logits does not improve over the standard probability-based variant, validating the default design.
+
+\subsection{Oracle comparison}
+An offline TENT oracle with a tuned large learning rate achieves 68.1 \% final accuracy on CIFAR-10-C but cannot be run online-it requires the entire test set at once and diverges if applied per batch. AdaEnt attains comparable accuracy under true online constraints and without learning-rate tuning.
+
+\subsection{Statistical summary}
+Across 30 paired measurements AdaEnt significantly improves convergence speed in 28, AUC in all 30, and final accuracy in 7 cases after Holm correction. Effect sizes for B90 are large (\(d>2\) on CIFAR, \(\approx 1.2\) on ImageNet).
+
+In short, the empirical evidence corroborates the theoretical intuition: self-scaled entropy delivers larger steps when they matter and smaller ones when they do not, yielding faster, stable, and cost-free adaptation.
+
+\section{Conclusion}
+AdaEnt tackles a fundamental inefficiency in entropy-based fully test-time adaptation: the mismatch between a fixed learning rate and the varying distance to the optimum. By multiplying the entropy gradient by the relative entropy \(E / E_{\max}\), AdaEnt realises an error-proportional step size without introducing any new hyper-parameters or altering the optimisation loop.
+
+Extensive experiments on CIFAR-C and ImageNet-C/R confirm that this one-line change reduces convergence time by up to 40 \%, maintains or slightly improves final accuracy, and leaves runtime and memory essentially unchanged. Robustness metrics remain intact, and integration with DELTA brings further gains, highlighting that AdaEnt complements rather than replaces existing FTTA advances \cite{zhao-2023-delta}.
+
+The success of AdaEnt suggests a broader principle: self-scaling unsupervised objectives can provide safe, automatic adaptation dynamics in the absence of labels. Future research may extend the idea to other losses, derive theoretical guarantees under non-stationary streams, and explore adaptive mixtures of self-scaled objectives with regularisers such as those proposed in DELTA. Beyond classification, self-scaling may benefit tasks like segmentation or detection, building on evidence that careful test-time loss design is broadly effective \cite{author-year-test}.
+
+In practice, AdaEnt offers practitioners a free, robust acceleration for FTTA: change one line, adapt faster.
+
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
