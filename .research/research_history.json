@@ -67,6 +67,11 @@
             "result": "",
             "error": "",
             "image_file_name_list": []
+          },
+          "evaluation": {
+            "consistency_score": 2,
+            "consistency_feedback": "No scientific consistency can be assessed because the experiment never executed.\n\nIdentified problems\n1. Implementation Issues\n   • All code files are empty (\"\"), nothing was run, so the experimental protocol was not implemented.\n   • Consequently there are no logs, metrics, or figures. Without outputs we cannot verify that AdaEnt’s adaptive-loss was applied, nor that three seeds, corruption sweeps, or ablations were performed.\n   • Effect: zero empirical evidence – the main claims (faster convergence, equal final accuracy, negligible overhead) remain untested.\n\n2. Result Interpretation Issues\n   • Because no numerical results exist, any interpretation would be speculative. The paper cannot cite B90 reductions, accuracy values, or overhead numbers.\n\n3. (Potential) Experimental Strategy Issues\n   • The planned strategy itself is sound and matches the overall play-book (Tier-1 benchmark, correct baselines, required metrics). The only gap is execution, not design.\n\nImpact on paper inclusion\n• The experiment in its present state should NOT be included in the paper. It provides no evidence for or against the proposed method and would weaken the methodological credibility.\n\nRequired to reach minimal publishable consistency\n• Implement and run the experiment exactly as described, record the specified metrics over three seeds, and report mean±std together with statistical tests comparing AdaEnt to TENT. Only then can consistency with the proposed hypotheses be judged.",
+            "is_selected_for_paper": true
           }
         },
         {
@@ -98,6 +103,11 @@
             "result": "",
             "error": "",
             "image_file_name_list": []
+          },
+          "evaluation": {
+            "consistency_score": 2,
+            "consistency_feedback": "No empirical evidence is available for exp-2-imagenet-robust: the code artefacts are empty and the “Experimental Results” section contains only blank fields.  \n\nProblem categorisation and impact:\n\n1. Experimental Strategy Issues – minor.\n   • The written protocol is, in principle, well aligned with the global playbook (Tier-2 datasets, required baselines, 3 seeds, B90, AUC, cost analysis, robustness probes).  Nothing is obviously missing at the design level.\n\n2. Implementation Issues – critical.\n   • All code stubs (main_py, evaluate_py, etc.) are empty, meaning the described procedure was never implemented.  The experiment therefore never ran.\n   • Because no execution took place, there is no guarantee that the AdaEnt loss, DELTA regulariser, ViT adaptation path, cost logging, seed handling, or evaluation metrics were implemented correctly.  \n   • Without an executable implementation the strategy cannot be validated.\n\n3. Result Interpretation Issues – critical.\n   • There are no numerical results, figures, or tables.  Consequently we cannot assess whether AdaEnt lowers B90, preserves final accuracy, or meets cost constraints.\n   • Primary claims (faster convergence, equal or better accuracy, negligible overhead, robustness) remain completely unsubstantiated for Tier-2 settings.\n\nInclusion decision: This experiment should NOT be included in the paper in its current state.  A full implementation and a complete set of results (mean±std over seeds, statistical tests, cost numbers) are required before it can contribute evidence for the main claims.\n\nSuggestions for improvement (limited to consistency concerns):\n• Provide runnable code that follows the stated protocol (especially AdaEnt loss, DELTA term, ViT support, profiling hooks).\n• Execute the experiment for the specified 3 seeds and report all mandatory metrics (accuracy-vs-batches curves, B90, AUC, runtime/memory, robustness probes).\n• Include statistical significance tests (paired t-test) to substantiate speed improvements and final accuracy differences.\n• Only after these elements are delivered can the experiment be evaluated for consistency with the proposed method and claims.",
+            "is_selected_for_paper": true
           }
         }
       ],
